@@ -3,14 +3,13 @@
 import os
 from flask import Flask, request, render_template, redirect, url_for, flash
 from werkzeug.utils import secure_filename
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
+from PIL import Image
 import numpy as np
-import tensorflow as tf
+import tflite_runtime.interpreter as tflite
 
 # Initialiser l'application Flask
 app = Flask(__name__)
-app.secret_key = 'your_secure_secret_key'  # Remplacez par une clé secrète sécurisée
+app.secret_key = os.environ.get('SECRET_KEY', 'your_secure_secret_key')  # Utilisez une clé secrète sécurisée via les variables d'environnement
 
 # Configurer le dossier de téléchargement et les extensions autorisées
 UPLOAD_FOLDER = 'static/uploads/'
@@ -22,12 +21,13 @@ app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # Limite de taille : 16MB
 # Créer le dossier de téléchargement s'il n'existe pas
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
-# Charger le modèle pré-entraîné
-try:
-    model = load_model('beauty_score_model.h5')
-    print("Modèle chargé avec succès.")
-except Exception as e:
-    print("Erreur lors du chargement du modèle :", e)
+# Charger le modèle TensorFlow Lite
+model_path = 'beauty_score_model.tflite'
+interpreter = tflite.Interpreter(model_path=model_path)
+interpreter.allocate_tensors()
+
+input_details = interpreter.get_input_details()
+output_details = interpreter.get_output_details()
 
 # Fonction pour vérifier les types de fichiers autorisés
 def allowed_file(filename):
@@ -36,8 +36,9 @@ def allowed_file(filename):
 
 # Fonction pour prétraiter l'image
 def preprocess_image(img_path, target_size=(224, 224)):
-    img = image.load_img(img_path, target_size=target_size)
-    img_array = image.img_to_array(img)
+    img = Image.open(img_path).convert('RGB')
+    img = img.resize(target_size)
+    img_array = np.array(img, dtype=np.float32)
     img_array = np.expand_dims(img_array, axis=0)
     img_array /= 255.0  # Normaliser à [0,1]
     return img_array
@@ -61,9 +62,13 @@ def index():
             filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             file.save(filepath)
             try:
-                # Prétraiter et prédire
+                # Prétraiter l'image
                 img_array = preprocess_image(filepath)
-                prediction = model.predict(img_array)
+
+                # Préparer les entrées pour TensorFlow Lite
+                interpreter.set_tensor(input_details[0]['index'], img_array)
+                interpreter.invoke()
+                prediction = interpreter.get_tensor(output_details[0]['index'])
                 score = prediction[0][0]
                 return render_template('result.html', score=score, user_image=filename)
             except Exception as e:
@@ -82,5 +87,5 @@ def uploaded_file(filename):
 
 # Exécuter l'application
 if __name__ == "__main__":
-    port = int(os.environ.get('PORT', 5000))  # Utiliser le port fourni par Heroku ou 5000 par défaut
+    port = int(os.environ.get('PORT', 5000))  # Utiliser le port fourni par Render ou 5000 par défaut
     app.run(host='0.0.0.0', port=port)
