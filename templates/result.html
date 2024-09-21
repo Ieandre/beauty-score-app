@@ -17,7 +17,7 @@
     <div class="w-full max-w-md p-8 bg-white shadow-md rounded-lg text-center">
         <h1 class="text-3xl font-bold mb-6">Your Predicted Beauty Score</h1>
         <p class="text-xl mb-4"><strong>Score:</strong> {{ score | round(2) }}</p>
-        <img src="{{ url_for('static', filename='uploads/' + user_image.split('/')[-1]) }}" alt="Uploaded Image" class="mx-auto mb-6 rounded">
+        <img src="{{ url_for('static', filename='uploads/' + user_image) }}" alt="Uploaded Image" class="mx-auto mb-6 rounded">
         <a href="{{ url_for('index') }}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Upload Another Photo</a>
     </div>
     <footer class="mt-8 text-gray-500 text-sm">

@@ -80,10 +80,8 @@ def index():
             return redirect(request.url)
     return render_template('index.html')
 
-# Route pour servir les images téléchargées (si nécessaire)
-@app.route('/static/uploads/<filename>')
-def uploaded_file(filename):
-    return redirect(url_for('static', filename='uploads/' + filename), code=301)
+# Route pour servir les images téléchargées (inutiles, supprimées pour éviter les redirections)
+# Supprimée pour éviter les boucles de redirection
 
 # Exécuter l'application
 if __name__ == "__main__":
