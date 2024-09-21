@@ -1,0 +1,17 @@
+/* static/css/styles.css */
+
+/* Polices et couleurs sont déjà gérées par Tailwind, mais vous pouvez ajouter des styles supplémentaires ici */
+
+/* Exemple: Centrer les images */
+img {
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Boutons personnalisés */
+button, a.button {
+    transition: background-color 0.3s ease;
+}
+
+/* Ajoutez d'autres styles selon vos besoins */
